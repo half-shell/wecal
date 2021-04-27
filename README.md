@@ -20,8 +20,8 @@ const values = data.reduce((values, { value }) => {
 }, []);
 ```
 
-A `Array.reduce()` function is not needed. We can simplify it a bit with a `Array.map()`
-function instead:
+> A `Array.reduce()` function is not needed. We can simplify it a bit with a `Array.map()`
+> function instead:
 
 ```js
 const values = data.map({ value } => value);
@@ -42,8 +42,8 @@ async function analyzeIndexes() {
 }
 ```
 
-Mixing both async and Promise syntaxes is pretty hard to read. If we take the async/await
-path, something a bit more straightforward would be:
+> Mixing both async and Promise syntaxes is pretty hard to read. If we take the
+> async/await path, something a bit more straightforward would be:
 
 ```js
  function getIndexes() {
@@ -61,7 +61,7 @@ async function analyzeIndexes() {
     }
 }
 ```
-Note also that we donc need to make `getIndexes()` async if we make it return a `Promise`.
+> Note also that we donc need to make `getIndexes()` async if we make it return a `Promise`.
 
 3.
 
@@ -83,8 +83,8 @@ if (user) {
 ctx.body = state;
 ```
 
-We can try here to make the default values of state a bit more obvious by using the spread
-operator:
+> We can try here to make the default values of state a bit more obvious by using the
+> spread operator:
 
 ```js
 const state = {
@@ -122,8 +122,8 @@ function getQueryProvider() {
 }
 ```
 
-Here we can simplify the return statement, since the second return statement `return;`
-will return undefined in that case.
+> Here we can simplify the return statement, since the second return statement `return;`
+> will return undefined in that case.
 
 ```js
 function getQueryProvider() {
@@ -146,9 +146,9 @@ function getParagraphTexts() {
 }
 ```
 
-This works, but since `querySelectorAll()` returns a
-[NodeList](https://developer.mozilla.org/fr/docs/Web/API/NodeList), we can straight up use
-`Array.from()` as mentionned in the documentation, to return an array of Elements.
+> This works, but since `querySelectorAll()` returns a
+> [NodeList](https://developer.mozilla.org/fr/docs/Web/API/NodeList), we can straight up
+> use `Array.from()` as mentionned in the documentation, to return an array of Elements.
 
 ```js
 function getParagraphTexts() {
@@ -200,9 +200,9 @@ function Employee({ id }) {
 }
 ```
 
-Since `setLoading(false)` is called with the same argument no matter what here, we could
-put it into a `finally()` call. We could even also use a `async/await` syntax with
-`try/catch/finally` to obtain a similar result.
+> Since `setLoading(false)` is called with the same argument no matter what here, we could
+> put it into a `finally()` call. We could even also use a `async/await` syntax with
+> `try/catch/finally` to obtain a similar result.
 
 ```js
 function Employee({ id }) {
@@ -269,8 +269,8 @@ async function getFilledIndexes() {
 }
 ```
 
-It seems we're building an array of indexes matching certain conditions. We can use
-`Array.filter()` here and return it straight away.
+> It seems we're building an array of indexes matching certain conditions. We can use
+> `Array.filter()` here and return it straight away.
 
 ```js
 async function getFilledIndexes() {
@@ -280,7 +280,8 @@ async function getFilledIndexes() {
         const status = await getStatus();
         const usersId = await getUsersId();
 
-        return indexes.filter(index => (index.status === status.filled && usersId.includes(index.userId)));
+        return indexes.filter(index => (index.status === status.filled &&
+                                        usersId.includes(index.userId)));
     } catch(_) {
         throw new Error ('Unable to get indexes');
     }
@@ -304,8 +305,8 @@ function getUserSettings(user) {
 }
 ```
 
-Returning early here avoids us from having so many nested `if`s, and we can use the `||`
-syntax if `getSettings()` doesn't yield a result either.
+> Returning early here avoids us from having so many nested `if`s, and we can use the `||`
+> syntax if `getSettings()` doesn't yield a result either.
 
 ```js
 function getUserSettings(user) {
