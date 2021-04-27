@@ -1,0 +1,30 @@
+{
+    "name": "wecal",
+    "version": "1.0.0",
+    "description": "weglot javascript assesment repo",
+    "main": "index.js",
+    "directories": {
+        "test": "test"
+    },
+    "scripts": {
+        "test": "npx jest",
+        "start": "node src/index.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/half-shell/wecal.git"
+    },
+    "author": "half-shell",
+    "license": "WTFPL",
+    "bugs": {
+        "url": "https://github.com/half-shell/wecal/issues"
+    },
+    "homepage": "https://github.com/half-shell/wecal#readme",
+    "devDependencies": {
+        "eslint": "^7.25.0",
+        "eslint-config-airbnb-base": "^14.2.1",
+        "eslint-config-standard": "^16.0.2",
+        "eslint-plugin-import": "^2.22.1",
+        "jest": "^26.6.3"
+    }
+}
