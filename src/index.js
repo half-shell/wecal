@@ -1,95 +1,100 @@
-const util = require('util');
+const {
+    formatDate,
+    formatOutput,
+    parseInput,
+    parseRange
+} = require('./utils');
 
-const ONE_HOUR = 60*60*1000;
-const ONE_MINUTE = 60*1000;
+const {
+    FIRST_SLOT,
+    LAST_SLOT,
+    ONE_HOUR,
+} = require('./constants');
 
-const FIRST_SLOT = new Date();
-FIRST_SLOT.setUTCHours("08", "00", "0", "0");
-const LAST_SLOT = new Date();
-LAST_SLOT.setUTCHours("17", "59", "0", "0");
+const getEarlierBegginingRangeIndex = (needle, stack) => {
+    const begs = stack.map(([beg]) => beg);
+    let index = -1;
 
-const formatDate = (date) => {
-    return util.format("%s:%s",
-                       // padding output timestamp wiht "0"s
-                       ("0" + date.getUTCHours()).slice(-2),
-                       ("0" + date.getUTCMinutes()).slice(-2));
-};
-
-const formatOutput = (day, begTime) => {
-    const endTime = new Date();
-
-    // NOTE(half-shell): We want the meeting to take place 1 min after the last one
-    // Expect if it is the first slot
-    if (begTime.getTime() !== FIRST_SLOT.getTime()) {
-        begTime.setTime(begTime.getTime() + 60*1000);
+    for(let i=0; i <= begs.length - 1; i++) {
+        if (needle <= begs[i]) {
+            index =  i;
+            break;
+        }
     }
 
-    endTime.setTime(begTime.getTime() + 60*59*1000);
-
-    return util.format('%s %s-%s', day, formatDate(begTime), formatDate(endTime));
-};
-
-const parseInput = (input) => {
-    return input
-        .split('\n')
-        .map(e => e.split(' '))
-        .reduce((acc, [day, slot]) => {
-            if (!acc[day]) {
-                acc[day] = [slot];
-            } else {
-                acc[day] = [...acc[day], slot];
-            }
-
-            return acc;
-        }, {});
-};
-
-const parseRange = (timeRange) => {
-    const [beg, end] = timeRange.split('-');
-
-    const [begHours, begMins] = beg.split(':');
-    const [endHours, endMins] = end.split(':');
-
-    const begTime = new Date();
-    begTime.setUTCHours(begHours, begMins, "0", "0");
-    const endTime = new Date();
-    endTime.setUTCHours(endHours, endMins, "0", "0");
-
-    return [begTime, endTime];
+    return index;
 }
 
-const filterRanges = (timeRanges) => {
-    return timeRanges
-        .map(parseRange)
-        .filter((tr, idx, trs) => {
-            // NOTE(half-shell): We return the first time range no matter what so we have
-            // at least 1 timerange since we're default to false
-            if (idx == 0) return true;
-            if (idx < trs.length - 1) return !(tr[1] < trs[idx + 1][0])
+const getLaterEndingRangeIndex = (needle, stack) => {
+    const ends = stack.map(([,end]) => end);
+    let index = -1;
 
-            return false;
-        });
-};
+    for(let i=0; i <= ends.length - 1; i++) {
+        if (needle >= ends[i]) {
+            index = i;
+            break;
+        }
+    }
+
+    return index;
+}
+
+const isTimerangeIncluded = ([beg, end], timeRanges) => {
+    return timeRanges.reduce((acc, tr) => {
+        return acc && beg < tr[1] && end > tr[0]
+    }, true)
+}
+
+const mergeTimeRanges = (timeRange) => {
+    return timeRange.reduce((acc, [beg, end], idx) => {
+        const earlierIdx = getEarlierBegginingRangeIndex(beg, acc);
+        const laterIdx = getLaterEndingRangeIndex(end, acc);
+        const isIncluded = isTimerangeIncluded([beg, end], acc);
+
+        if ((earlierIdx == -1 && laterIdx == -1) && !isIncluded) {
+            acc = [...acc, [beg, end]];
+        }
+
+        if (earlierIdx !== -1 && isIncluded) {
+            acc[earlierIdx][0] = beg;
+        }
+
+        if (laterIdx !== -1 && isIncluded) {
+            acc[laterIdx][1] = end;
+        }
+
+        return acc
+    }, [timeRange[0]]);
+}
 
 const findGap = (day, timeRanges) => {
-    const filteredRanges = filterRanges(timeRanges);
+    const filteredRanges = timeRanges
+          .map(parseRange)
+          .sort(([t1], [t2]) => t1 - t2);
+
+    const mergedRanges = mergeTimeRanges(filteredRanges);
 
     const allSlots = [
         [FIRST_SLOT, FIRST_SLOT],
-        ...filteredRanges,
+        ...mergedRanges,
         [LAST_SLOT, LAST_SLOT]
     ];
 
     return allSlots
-        .filter((slot, idx) => {
-            if (allSlots && allSlots[idx+1]) {
-                // NOTE(half-shell): This gets us the 59min interval needed
-                return (allSlots[idx + 1][0].getTime() - slot[1].getTime()) >= ONE_HOUR;
-            }
+    // NOTE(half-shell): Is there room for an hour in between the beginning of this slot
+    // and the beginning of the next one
+        .filter(([beg, end], idx, slots) => {
+            if (!slots[idx+1]) return true;
 
-            return false;
+            return slots[idx+1][0] - beg >= ONE_HOUR;
         })
-        .map(slots => slots[1]);
+    // NOTE(half-shell): Is there room for an hour in between the end of this slot and the end of the next one
+        .filter(([beg, end], idx, slots) => {
+            if (!slots[idx+1]) return false;
+
+            return slots[idx+1][1] - end >= ONE_HOUR;
+        })
+        .map(([, slot]) => slot);
 };
 
 const findSlot = (slots) => {
